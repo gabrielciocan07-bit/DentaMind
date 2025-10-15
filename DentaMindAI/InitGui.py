@@ -8,13 +8,11 @@ class DentaMindAIWorkbench (Workbench):
     """The main DentaMind AI Workbench object."""
     MenuText = "DentaMind AI"
     ToolTip = "AI tools for dental design"
+    Icon = "" # We'll add an icon later
 
     def Initialize(self):
         """Executed when the workbench is created. All components are defined here."""
         global my_panel
-
-        # --- THIS IS THE CRITICAL FIX ---
-        # Import PySide here, making it available to all nested classes below.
         from PySide import QtGui, QtCore
 
         # --- NESTED CLASS 1: The Custom UI Panel ---
@@ -86,7 +84,7 @@ class DentaMindAIWorkbench (Workbench):
             def GetResources(self):
                 return {'Pixmap': '', 'MenuText': 'Import Scans', 'ToolTip': 'Load patient STL files'}
 
-        # --- Initialization Logic (runs only once) ---
+        # --- Initialization Logic (runs only once when workbench is created) ---
         self.observer = DocumentObserver()
         my_panel = DentaMindPanel()
         
