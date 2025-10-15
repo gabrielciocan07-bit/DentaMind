@@ -36,8 +36,7 @@ class DentaMindAIWorkbench (Workbench):
                 while self.scroll_layout.count():
                     child = self.scroll_layout.takeAt(0)
                     if child.widget(): child.widget().deleteLater()
-
-                # CORRECTED: Use the global 'App' object directly
+                
                 doc = App.ActiveDocument
                 if not doc:
                     self.scroll_layout.addWidget(QtGui.QLabel("No document open."))
@@ -59,7 +58,6 @@ class DentaMindAIWorkbench (Workbench):
                     self.scroll_layout.addLayout(row)
             
             def set_transparency(self, obj_name, value):
-                # CORRECTED: Use the global 'App' object directly
                 doc = App.ActiveDocument
                 if doc:
                     obj = doc.getObject(obj_name)
@@ -77,7 +75,6 @@ class DentaMindAIWorkbench (Workbench):
             def Activated(self):
                 paths, _ = QtGui.QFileDialog.getOpenFileNames(None, "Select STL scans", "", "STL Files (*.stl)")
                 if paths:
-                    # CORRECTED: Use the global 'App' object directly
                     doc = App.ActiveDocument or App.newDocument("PatientCase")
                     for path in paths:
                         import Mesh
@@ -86,7 +83,7 @@ class DentaMindAIWorkbench (Workbench):
             def GetResources(self):
                 return {'Pixmap': '', 'MenuText': 'Import Scans', 'ToolTip': 'Load patient STL files'}
 
-        # --- Initialization Logic (runs only once) ---
+        # --- Initialization Logic ---
         self.observer = DocumentObserver()
         my_panel = DentaMindPanel()
         
@@ -96,7 +93,6 @@ class DentaMindAIWorkbench (Workbench):
         
     def Activated(self):
         """Executed when the workbench is switched to."""
-        # CORRECTED: Use the global 'App' object directly
         App.addObserver(self.observer)
         if my_panel:
             my_panel.widget.show()
@@ -105,7 +101,6 @@ class DentaMindAIWorkbench (Workbench):
 
     def Deactivated(self):
         """Executed when the workbench is switched away from."""
-        # CORRECTED: Use the global 'App' object directly
         App.removeObserver(self.observer)
         if my_panel:
             my_panel.widget.hide()
