@@ -1,7 +1,7 @@
 import FreeCAD
 import FreeCADGui
 
-# This global variable is needed to hold the panel instance
+# This global variable is needed to hold our panel so commands can access it
 my_panel = None
 
 class DentaMindAIWorkbench (Workbench):
@@ -10,13 +10,14 @@ class DentaMindAIWorkbench (Workbench):
     ToolTip = "AI tools for dental design"
 
     def Initialize(self):
-        """Executed when the workbench is created. All components are defined here."""
+        """Executed once when the workbench is created."""
         global my_panel
         from PySide import QtGui, QtCore
 
-        # --- NESTED CLASS 1: The Custom UI Panel ---
+        # --- NESTED CLASS 1: The Permanent UI Panel ---
         class DentaMindPanel:
             def __init__(self):
+                # Create a dockable widget (a permanent panel)
                 self.widget = QtGui.QDockWidget("DentaMind AI Controls")
                 self.content = QtGui.QWidget()
                 self.widget.setWidget(self.content)
@@ -28,17 +29,17 @@ class DentaMindAIWorkbench (Workbench):
                 self.scroll_layout = QtGui.QVBoxLayout(self.scroll_content)
                 self.scroll_layout.setAlignment(QtCore.Qt.AlignTop)
                 scroll_area.setWidget(self.scroll_content)
+                # Add the panel to the main FreeCAD window, docked on the left
                 main_window = FreeCADGui.getMainWindow()
                 main_window.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.widget)
-                self.update_scan_list()
 
             def update_scan_list(self):
+                # Clear any old widgets from the panel
                 while self.scroll_layout.count():
                     child = self.scroll_layout.takeAt(0)
                     if child.widget(): child.widget().deleteLater()
                 
-                # CORRECTED: Use FreeCAD.App
-                doc = FreeCAD.App.ActiveDocument
+                doc = FreeCAD.ActiveDocument
                 if not doc:
                     self.scroll_layout.addWidget(QtGui.QLabel("No document open."))
                     return
@@ -48,6 +49,7 @@ class DentaMindAIWorkbench (Workbench):
                     self.scroll_layout.addWidget(QtGui.QLabel("No scans loaded."))
                     return
 
+                # Create a new label and slider for each scan
                 for obj in mesh_objects:
                     row = QtGui.QHBoxLayout()
                     row.addWidget(QtGui.QLabel(obj.Label))
@@ -59,54 +61,48 @@ class DentaMindAIWorkbench (Workbench):
                     self.scroll_layout.addLayout(row)
             
             def set_transparency(self, obj_name, value):
-                # CORRECTED: Use FreeCAD.App
-                doc = FreeCAD.App.ActiveDocument
+                doc = FreeCAD.ActiveDocument
                 if doc:
                     obj = doc.getObject(obj_name)
                     if obj:
                         obj.ViewObject.Transparency = value
         
-        # --- NESTED CLASS 2: The Document Observer ---
-        class DocumentObserver:
-            def addObject(self, doc, obj):
-                if my_panel:
-                    my_panel.update_scan_list()
-
-        # --- NESTED CLASS 3: The Import Command ---
+        # --- NESTED CLASS 2: The Import Command ---
         class ImportScansCmd:
             def Activated(self):
                 paths, _ = QtGui.QFileDialog.getOpenFileNames(None, "Select STL scans", "", "STL Files (*.stl)")
                 if paths:
-                    # CORRECTED: Use FreeCAD.App
-                    doc = FreeCAD.App.ActiveDocument or FreeCAD.App.newDocument("PatientCase")
+                    doc = FreeCAD.ActiveDocument or FreeCAD.newDocument("PatientCase")
                     for path in paths:
                         import Mesh
                         Mesh.insert(path, doc.Name)
                     FreeCADGui.activeDocument().activeView().fitAll()
+                    # After importing, tell the panel to update itself
+                    my_panel.update_scan_list()
+
             def GetResources(self):
                 return {'Pixmap': '', 'MenuText': 'Import Scans', 'ToolTip': 'Load patient STL files'}
 
         # --- Initialization Logic (runs only once) ---
-        self.observer = DocumentObserver()
+        # Create the panel and the command
         my_panel = DentaMindPanel()
-        
         FreeCADGui.addCommand('DentaMindAI_ImportScans', ImportScansCmd())
+        
+        # Build the toolbar with only the Import button
         self.toolbar = ["DentaMindAI_ImportScans"]
         self.appendToolbar("DentaMind AI Tools", self.toolbar)
         
     def Activated(self):
-        """Executed when the workbench is switched to."""
-        # CORRECTED: Use FreeCAD.App
-        FreeCAD.App.addObserver(self.observer)
+        """Executed when you switch TO this workbench."""
+        # Make the panel visible
         if my_panel:
             my_panel.widget.show()
             my_panel.update_scan_list()
         print("DentaMind AI Workbench Activated.")
 
     def Deactivated(self):
-        """Executed when the workbench is switched away from."""
-        # CORRECTED: Use FreeCAD.App
-        FreeCAD.App.removeObserver(self.observer)
+        """Executed when you switch AWAY from this workbench."""
+        # Hide the panel
         if my_panel:
             my_panel.widget.hide()
         print("DentaMind AI Workbench Deactivated.")
