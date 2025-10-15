@@ -64,11 +64,17 @@ class DentaMindAIWorkbench (Workbench):
                     child = self.scroll_layout.takeAt(0)
                     if child.widget(): child.widget().deleteLater()
                 
-                doc = FreeCAD.App.ActiveDocument
-                if not doc or not [o for o in doc.Objects if o.isDerivedFrom("Mesh::Feature")]:
+                # CORRECTED: Use the global 'App' object directly
+                doc = App.ActiveDocument
+                if not doc:
+                    self.scroll_layout.addWidget(QtGui.QLabel("No document open."))
+                    return
+                
+                mesh_objects = [o for o in doc.Objects if o.isDerivedFrom("Mesh::Feature")]
+                if not mesh_objects:
                     self.scroll_layout.addWidget(QtGui.QLabel("No scans loaded."))
                     return
-                for obj in [o for o in doc.Objects if o.isDerivedFrom("Mesh::Feature")]:
+                for obj in mesh_objects:
                     row = QtGui.QHBoxLayout()
                     row.addWidget(QtGui.QLabel(obj.Label))
                     slider = QtGui.QSlider(QtCore.Qt.Horizontal)
@@ -79,8 +85,8 @@ class DentaMindAIWorkbench (Workbench):
                     self.scroll_layout.addLayout(row)
             
             def set_transparency(self, obj_name, value):
-                doc = FreeCAD.App.ActiveDocument
-                # CORRECTED SYNTAX: Replaced incompatible ':=' operator
+                # CORRECTED: Use the global 'App' object directly
+                doc = App.ActiveDocument
                 if doc:
                     obj = doc.getObject(obj_name)
                     if obj:
@@ -97,7 +103,8 @@ class DentaMindAIWorkbench (Workbench):
             def Activated(self):
                 paths, _ = QtGui.QFileDialog.getOpenFileNames(None, "Select STL scans", "", "STL Files (*.stl)")
                 if paths:
-                    doc = FreeCAD.App.ActiveDocument or FreeCAD.App.newDocument("PatientCase")
+                    # CORRECTED: Use the global 'App' object directly
+                    doc = App.ActiveDocument or App.newDocument("PatientCase")
                     for path in paths:
                         import Mesh
                         Mesh.insert(path, doc.Name)
@@ -115,9 +122,8 @@ class DentaMindAIWorkbench (Workbench):
         
     def Activated(self):
         """Executed when you switch TO this workbench."""
-        # --- THIS IS THE CRITICAL FIX ---
-        # Call addObserver on the App object
-        FreeCAD.App.addObserver(self.observer)
+        # CORRECTED: Use the global 'App' object directly
+        App.addObserver(self.observer)
         if my_panel:
             my_panel.widget.show()
             my_panel.update_scan_list()
@@ -125,9 +131,8 @@ class DentaMindAIWorkbench (Workbench):
 
     def Deactivated(self):
         """Executed when you switch AWAY from this workbench."""
-        # --- THIS IS THE CRITICAL FIX ---
-        # Call removeObserver on the App object
-        FreeCAD.App.removeObserver(self.observer)
+        # CORRECTED: Use the global 'App' object directly
+        App.removeObserver(self.observer)
         if my_panel:
             my_panel.widget.hide()
         print("DentaMind AI Workbench Deactivated.")
