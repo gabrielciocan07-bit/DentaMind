@@ -37,7 +37,8 @@ class DentaMindAIWorkbench (Workbench):
                     child = self.scroll_layout.takeAt(0)
                     if child.widget(): child.widget().deleteLater()
                 
-                doc = App.ActiveDocument
+                # CORRECTED: Use FreeCAD.App
+                doc = FreeCAD.App.ActiveDocument
                 if not doc:
                     self.scroll_layout.addWidget(QtGui.QLabel("No document open."))
                     return
@@ -58,7 +59,8 @@ class DentaMindAIWorkbench (Workbench):
                     self.scroll_layout.addLayout(row)
             
             def set_transparency(self, obj_name, value):
-                doc = App.ActiveDocument
+                # CORRECTED: Use FreeCAD.App
+                doc = FreeCAD.App.ActiveDocument
                 if doc:
                     obj = doc.getObject(obj_name)
                     if obj:
@@ -75,7 +77,8 @@ class DentaMindAIWorkbench (Workbench):
             def Activated(self):
                 paths, _ = QtGui.QFileDialog.getOpenFileNames(None, "Select STL scans", "", "STL Files (*.stl)")
                 if paths:
-                    doc = App.ActiveDocument or App.newDocument("PatientCase")
+                    # CORRECTED: Use FreeCAD.App
+                    doc = FreeCAD.App.ActiveDocument or FreeCAD.App.newDocument("PatientCase")
                     for path in paths:
                         import Mesh
                         Mesh.insert(path, doc.Name)
@@ -83,7 +86,7 @@ class DentaMindAIWorkbench (Workbench):
             def GetResources(self):
                 return {'Pixmap': '', 'MenuText': 'Import Scans', 'ToolTip': 'Load patient STL files'}
 
-        # --- Initialization Logic ---
+        # --- Initialization Logic (runs only once) ---
         self.observer = DocumentObserver()
         my_panel = DentaMindPanel()
         
@@ -93,7 +96,8 @@ class DentaMindAIWorkbench (Workbench):
         
     def Activated(self):
         """Executed when the workbench is switched to."""
-        App.addObserver(self.observer)
+        # CORRECTED: Use FreeCAD.App
+        FreeCAD.App.addObserver(self.observer)
         if my_panel:
             my_panel.widget.show()
             my_panel.update_scan_list()
@@ -101,7 +105,8 @@ class DentaMindAIWorkbench (Workbench):
 
     def Deactivated(self):
         """Executed when the workbench is switched away from."""
-        App.removeObserver(self.observer)
+        # CORRECTED: Use FreeCAD.App
+        FreeCAD.App.removeObserver(self.observer)
         if my_panel:
             my_panel.widget.hide()
         print("DentaMind AI Workbench Deactivated.")
